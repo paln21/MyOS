@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Wasm OS</title>
+</head>
+<body style="background-color: #333; color: white; text-align: center;">
+    <h1>My OS Display</h1>
+    <canvas id="screen" width="320" height="200" style="border: 1px solid #fff;"></canvas>
+
+    <script>
+        const canvas = document.getElementById('screen');
+        const ctx = canvas.getContext('2d');
+        const loadOS = async () => {
+            const response = await fetch('kernel.wasm');
+            const buffer = await response.arrayBuffer();
+            const obj = await WebAssembly.instantiate(buffer, {});
+            const exports = obj.instance.exports;
+            const memory = exports.memory;
+            exports.kernel_main();
+            const vramPtr = exports.get_vram_pointer();
+            const width = 320;
+            const height = 200;
+            const vramSize = width * height * 4; 
+            const vramArray = new Uint8ClampedArray(memory.buffer, vramPtr, vramSize);
+            const imgData = new ImageData(vramArray, width, height);
+            ctx.putImageData(imgData, 0, 0);
+        };
+        loadOS();
+    </script>
+</body>
+</html>
